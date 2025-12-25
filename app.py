@@ -61,3 +61,17 @@ if st.button("Submit Decision"):
             st.success(f"Decision recorded: {decision}")
         except Exception as e:
             st.error(str(e))
+
+from audit.audit_logger import AUDIT_LOG
+
+st.subheader("4. Audit Log (Read-Only)")
+
+if AUDIT_LOG:
+    for i, record in enumerate(AUDIT_LOG, 1):
+        with st.expander(f"Decision #{i}"):
+            st.json(record)
+else:
+    st.info("No audit records yet")
+
+
+
