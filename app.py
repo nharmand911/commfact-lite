@@ -27,3 +27,37 @@ if content_text:
             st.write(f"- {r['rule_id']}: {r['description']}")
     else:
         st.success("No rule violations detected")
+
+from core.content import Content
+from core.decision import submit_decision
+
+st.subheader("3. Reviewer Decision")
+
+reviewer_role = "reviewer"  # hardcoded for Lite MVP
+
+decision = st.selectbox(
+    "Decision",
+    ["REVISION_REQUIRED", "APPROVED"]
+)
+
+reason = st.text_input(
+    "Decision Reason (mandatory)"
+)
+
+if st.button("Submit Decision"):
+    if not content_text:
+        st.error("No content provided")
+    else:
+        content = Content(content_text, created_by="ui_user")
+
+        try:
+            submit_decision(
+                content=content,
+                validation_result=validation_result,
+                decision=decision,
+                reason=reason,
+                user_role=reviewer_role
+            )
+            st.success(f"Decision recorded: {decision}")
+        except Exception as e:
+            st.error(str(e))
