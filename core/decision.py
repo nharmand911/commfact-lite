@@ -18,3 +18,15 @@ def submit_decision(
 
     content.status = decision
     return content.status
+
+from audit.audit_logger import log_decision
+
+# setelah content.status di-set
+log_decision(
+    content_id=content.content_id,
+    actor_role=user_role,
+    decision=decision,
+    reason=reason,
+    severity=validation_result["final_severity"],
+    rule_ids=[r["rule_id"] for r in validation_result["triggered_rules"]]
+)
