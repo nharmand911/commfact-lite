@@ -73,5 +73,11 @@ if AUDIT_LOG:
 else:
     st.info("No audit records yet")
 
+if st.button("Submit Decision"):
+    if not reason.strip():
+        st.error("Decision reason is required")
+        st.stop()
+
+
 
 
