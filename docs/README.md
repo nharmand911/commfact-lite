@@ -6,3 +6,9 @@ This folder contains internal system specifications:
 - Rule Taxonomy v1.0
 - Governance & Accountability Model
 
+These documents define the non-negotiable boundaries
+of COMMFACT Lite Phase 1.
+
+If a feature is not justified here,
+it should not be built.
+
