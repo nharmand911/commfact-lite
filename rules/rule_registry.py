@@ -1,5 +1,11 @@
-from rules.rule_definitions import AbsoluteClaimRule
+from rules.rule_definitions import (
+    AbsoluteClaimRule,
+    SuperiorityClaimRule,
+    GuaranteeClaimRule
+)
 
 RULE_REGISTRY = [
-    AbsoluteClaimRule()
+    AbsoluteClaimRule(),
+    SuperiorityClaimRule(),
+    GuaranteeClaimRule()
 ]
