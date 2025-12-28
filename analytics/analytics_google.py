@@ -50,43 +50,65 @@ def _get_sheet():
         print("[Analytics] SPREADSHEET_ID not set, analytics disabled")
         return None
 
-    if not SERVICE_ACCOUNT_JSON_CONTENT:
-        raise RuntimeError("SERVICE_ACCOUNT_JSON environment variable is not set")
+
+    try:
+        if SERVICE_ACCOUNT_JSON_B64:
+            decoded = base64.b64decode(SERVICE_ACCOUNT_JSON_B64).decode("utf-8")
+            creds_dict = json.loads(decoded)
+        elif SERVICE_ACCOUNT_JSON_CONTENT:
+            creds_dict = json.loads(SERVICE_ACCOUNT_JSON_CONTENT)
+        else:
+            print("[Analytics] No service account secret found, analytics disabled")
+            return None
+    except Exception as e:
+        print(f"[Analytics] Invalid service account secret: {e}")
+        return None
+
+    try:
+    #if not SERVICE_ACCOUNT_JSON_CONTENT:
+    #    raise RuntimeError("SERVICE_ACCOUNT_JSON environment variable is not set")
 
     # ---- Authorize ----
-    if _gc is None:
-        creds_dict = json.loads(SERVICE_ACCOUNT_JSON_CONTENT)
-        creds = Credentials.from_service_account_info(
-            creds_dict,
-            scopes=[
-                "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/drive",
-            ],
-        )
-        _gc = gspread.authorize(creds)
+        if _gc is None:
+    #    creds_dict = json.loads(SERVICE_ACCOUNT_JSON_CONTENT)
+            creds = Credentials.from_service_account_info(
+                creds_dict,
+                scopes=[
+                    "https://www.googleapis.com/auth/spreadsheets",
+                    "https://www.googleapis.com/auth/drive",
+                ],
+            )
+            _gc = gspread.authorize(creds)
 
     # ---- Open spreadsheet ----
-    if _sh is None:
-        _sh = _gc.open_by_key(SPREADSHEET_ID)
+        if _sh is None:
+            _sh = _gc.open_by_key(SPREADSHEET_ID)
 
     # ---- Get / create worksheet ----
-    try:
-        _ws = _sh.worksheet(SHEET_NAME)
-    except gspread.WorksheetNotFound:
-        _ws = _sh.add_worksheet(
-            title=SHEET_NAME,
-            rows="1000",
-            cols=str(len(HEADERS)),
-        )
-        _ws.append_row(HEADERS, value_input_option="RAW")
+        if _sh is None:
+            try:
+                _ws = _sh.worksheet(SHEET_NAME)
+            except gspread.WorksheetNotFound:
+                _ws = _sh.add_worksheet(
+                    title=SHEET_NAME,
+                    rows="1000",
+                    cols=str(len(HEADERS)),
+                )
+                _ws.append_row(HEADERS, value_input_option="RAW")
+            
         return _ws
 
-    # ---- Ensure header exists ----
-    first_row = _ws.row_values(1)
-    if first_row != HEADERS:
-        _ws.insert_row(HEADERS, index=1)
 
-    return _ws
+    except Exception as e:
+        print(f"[Analytics] Failed to initialize Google Sheet: {e}")
+        return None
+    
+    # ---- Ensure header exists ----
+    #first_row = _ws.row_values(1)
+    #if first_row != HEADERS:
+    #    _ws.insert_row(HEADERS, index=1)
+
+    #return _ws
 
 
 # =========================================
