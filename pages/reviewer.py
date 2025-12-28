@@ -41,110 +41,105 @@ pending_contents = [c for c in CONTENT_QUEUE if c.get("status") == "SUBMITTED"]
 
 if not pending_contents:
     st.info("📭 No content pending review.")
-    st.stop()
-
-content_map = {
-    f"{i+1}. {c.get('created_by')} — {c['validation_result'].get('final_severity', 'N/A')}": i
-    for i, c in enumerate(pending_contents)
-}
-
-selected_label = st.selectbox(
-    "Select content to review",
-    list(content_map.keys())
-)
-
-selected = pending_contents[content_map[selected_label]]
-
-# =========================
-# CONTENT DISPLAY (READ ONLY)
-# =========================
-st.subheader("📄 Content Under Review")
-
-st.text_area(
-    "Content",
-    value=selected.get("content", ""),
-    height=220,
-    disabled=True
-)
-
-# =========================
-# VALIDATION RESULT
-# =========================
-st.subheader("⚠️ Validation Result")
-severity = selected["validation_result"].get("final_severity", "N/A")
-
-if severity == "HIGH":
-    st.error(f"Final Severity: {severity}")
-elif severity == "MEDIUM":
-    st.warning(f"Final Severity: {severity}")
 else:
-    st.info(f"Final Severity: {severity}")
+    content_map = {
+        f"{i+1}. {c.get('created_by')} — "
+        f"{c['validation_result'].get('final_severity', 'N/A')}": i
+        for i, c in enumerate(pending_contents)
+    }
 
-triggered_rules = selected["validation_result"].get("triggered_rules", [])
+    selected_label = st.selectbox(
+        "Select content to review",
+        list(content_map.keys())
+    )
 
-if triggered_rules:
-    st.warning("Triggered Rules:")
-    for r in triggered_rules:
-        st.write(f"- **{r.get('rule_id','')}**: {r.get('description','')}")
-else:
-    st.success("✅ No rule violations detected")
+    selected = pending_contents[content_map[selected_label]]
 
-# =========================
-# DECISION
-# =========================
-st.divider()
-st.subheader("📝 Reviewer Decision")
+    # =========================
+    # CONTENT DISPLAY (READ ONLY)
+    # =========================
+    st.subheader("📄 Content Under Review")
+    st.text_area(
+        "Content",
+        value=selected.get("content", ""),
+        height=220,
+        disabled=True
+    )
 
-decision = st.selectbox(
-    "Decision",
-    ["REVISION_REQUIRED", "APPROVED"]
-)
+    # =========================
+    # VALIDATION RESULT
+    # =========================
+    st.subheader("⚠️ Validation Result")
+    severity = selected["validation_result"].get("final_severity", "N/A")
 
-reason = st.text_area(
-    "Decision Reason (Mandatory)",
-    placeholder="Explain the decision and justification...",
-    height=120
-)
-
-if st.button("Submit Decision", use_container_width=True):
-    if not reason.strip():
-        st.error("🚨 Decision reason is mandatory.")
+    if severity == "HIGH":
+        st.error(f"Final Severity: {severity}")
+    elif severity == "MEDIUM":
+        st.warning(f"Final Severity: {severity}")
     else:
-        try:
-            # --- Core decision ---
-            submit_decision(
-                content=selected,
-                validation_result=selected["validation_result"],
-                decision=decision,
-                reason=reason,
-                actor_username=st.session_state.get("username"),
-                actor_role=st.session_state.get("role"),
-                agency_code=st.session_state.get("agency_code")
-            )
+        st.info(f"Final Severity: {severity}")
 
-            # --- Analytics ---
-            log_event_google(
-                event_type="SUBMIT_DECISION",
-                object_type="DECISION",
-                object_id=selected["content_id"],
-                content_excerpt=selected["content"][:200],
-                severity=severity,
-                triggered_rules=", ".join(
-                    [r["rule_id"] for r in triggered_rules]
-                ),
-                decision=decision,
-                app_version="v0.1-pilot"
-            )
+    triggered_rules = selected["validation_result"].get("triggered_rules", [])
 
-            # --- Lock content ---
-            selected["status"] = "DECIDED"
-            selected["decision"] = decision
+    if triggered_rules:
+        st.warning("Triggered Rules:")
+        for r in triggered_rules:
+            st.write(f"- **{r.get('rule_id','')}**: {r.get('description','')}")
+    else:
+        st.success("✅ No rule violations detected")
 
-            st.success("✅ Decision recorded and content locked")
-            st.rerun()
+    # =========================
+    # DECISION
+    # =========================
+    st.divider()
+    st.subheader("📝 Reviewer Decision")
 
-        except Exception as e:
-            st.error(f"System error: {str(e)}")
+    decision = st.selectbox(
+        "Decision",
+        ["REVISION_REQUIRED", "APPROVED"]
+    )
+
+    reason = st.text_area(
+        "Decision Reason (Mandatory)",
+        placeholder="Explain the decision and justification...",
+        height=120
+    )
+
+    if st.button("Submit Decision", use_container_width=True):
+        if not reason.strip():
+            st.error("🚨 Decision reason is mandatory.")
+        else:
+            try:
+                # --- Core decision ---
+                submit_decision(
+                    content=selected,
+                    validation_result=selected["validation_result"],
+                    decision=decision,
+                    reason=reason,
+                    actor_username=st.session_state.get("username"),
+                    actor_role=st.session_state.get("role"),
+                    agency_code=st.session_state.get("agency_code")
+                )
+
+                # --- Analytics ---
+                log_event_google(
+                    event_type="SUBMIT_DECISION",
+                    object_type="DECISION",
+                    object_id=selected["content_id"],
+                    content_excerpt=selected["content"][:200],
+                    severity=severity,
+                    triggered_rules=", ".join(
+                        [r["rule_id"] for r in triggered_rules]
+                    ),
+                    decision=decision,
+                    app_version="v0.1-pilot"
+                )
+
+                st.success("✅ Decision recorded and content locked")
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"System error: {str(e)}")
 
 # =========================
 # AUDIT LOG (READ-ONLY)
