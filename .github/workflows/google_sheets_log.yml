@@ -1,0 +1,41 @@
+name: Google Sheets Logging Test
+
+# Trigger workflow saat push ke main atau pull request
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  log_event:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Setup Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: |
+          pip install gspread oauth2client streamlit
+
+      # 4️⃣ Create service_account.json from secret
+      - name: Create service_account.json
+        run: |
+          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > service_account.json
+
+      # 5️⃣ Run Python script
+      - name: Run analytics script
+        env:
+          SERVICE_ACCOUNT_JSON: service_account.json
+          SPREADSHEET_ID: 1ZzA7GlBOOf0URv4RR5K6z0DydFKpmX7WjS0KiuzQw5k
+        run: |
+          python analytics/test_log.py
