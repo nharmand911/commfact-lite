@@ -59,12 +59,12 @@ else:
     # =========================
     st.subheader("Content Under Review")
     st.text_area(
-        label="",
-        value=selected.get("content", ""),
-        height=200,
-        disabled=True
+        label="Review Notes",
+        value=review_text,
+        key="review_notes",
+        label_visibility="collapsed"
     )
-
+    
     # =========================
     # VALIDATION RESULT
     # =========================
