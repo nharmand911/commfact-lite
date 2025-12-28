@@ -1,62 +1,93 @@
-# analytics/analytics_google.py
-
+import os
+import json
 import gspread
 from datetime import datetime
 from typing import Optional
-import streamlit as st
-import os
+from google.oauth2.service_account import Credentials
 
 # =========================================
 # CONFIGURATION
 # =========================================
-# Gunakan SERVICE_ACCOUNT_JSON dari environment variable jika ada (untuk CI/GitHub Actions)
-SERVICE_ACCOUNT_JSON = os.getenv(
-    "SERVICE_ACCOUNT_JSON_LOCAL",  # untuk lokal bisa pakai path lokal
-    r"C:\Users\nharm\commfact-lite\analytics\service_account.json"
-)
-
-SPREADSHEET_ID = os.getenv(
-    "SPREADSHEET_ID",
-    "111UW8wT-g8F_-1J3ptIzNtI01UBw8vm3XIzMvuhtV8k"
-)
+SERVICE_ACCOUNT_JSON_CONTENT = os.getenv("SERVICE_ACCOUNT_JSON")
+SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")  # WAJIB via secret
 SHEET_NAME = "AnalyticsLog"
 
-# Cache client supaya tidak autentikasi setiap kali log
+#if not SPREADSHEET_ID:
+#    raise RuntimeError("SPREADSHEET_ID environment variable is not set")
+
+# cache client
 _gc = None
 _sh = None
 _ws = None
+
+HEADERS = [
+    "timestamp",
+    "session_id",
+    "username",
+    "role",
+    "agency_code",
+    "event_type",
+    "object_type",
+    "object_id",
+    "content_excerpt",
+    "severity",
+    "triggered_rules",
+    "decision",
+    "app_version",
+]
 
 # =========================================
 # INIT GOOGLE SHEET
 # =========================================
 def _get_sheet():
-    """
-    Autentikasi ke Google Sheet via Service Account dan buka sheet.
-    Membuat sheet baru jika SHEET_NAME belum ada, dan menambahkan header lengkap.
-    """
     global _gc, _sh, _ws
 
-    if _ws:
+    if _ws is not None:
         return _ws
 
-    if not _gc:
-        _gc = gspread.service_account(filename=SERVICE_ACCOUNT_JSON)
-    if not _sh:
+    if not SPREADSHEET_ID:
+        # logging non-fatal
+        print("[Analytics] SPREADSHEET_ID not set, analytics disabled")
+        return None
+
+    if not SERVICE_ACCOUNT_JSON_CONTENT:
+        raise RuntimeError("SERVICE_ACCOUNT_JSON environment variable is not set")
+
+    # ---- Authorize ----
+    if _gc is None:
+        creds_dict = json.loads(SERVICE_ACCOUNT_JSON_CONTENT)
+        creds = Credentials.from_service_account_info(
+            creds_dict,
+            scopes=[
+                "https://www.googleapis.com/auth/spreadsheets",
+                "https://www.googleapis.com/auth/drive",
+            ],
+        )
+        _gc = gspread.authorize(creds)
+
+    # ---- Open spreadsheet ----
+    if _sh is None:
         _sh = _gc.open_by_key(SPREADSHEET_ID)
 
+    # ---- Get / create worksheet ----
     try:
         _ws = _sh.worksheet(SHEET_NAME)
     except gspread.WorksheetNotFound:
-        # Buat sheet baru jika belum ada
-        _ws = _sh.add_worksheet(title=SHEET_NAME, rows="1000", cols="25")
-        # Tambahkan header lengkap, termasuk 'decision'
-        _ws.append_row([
-            "timestamp", "session_id", "username", "role", "agency_code",
-            "event_type", "object_type", "object_id",
-            "content_excerpt", "severity", "triggered_rules",
-            "decision", "app_version"
-        ])
+        _ws = _sh.add_worksheet(
+            title=SHEET_NAME,
+            rows="1000",
+            cols=str(len(HEADERS)),
+        )
+        _ws.append_row(HEADERS, value_input_option="RAW")
+        return _ws
+
+    # ---- Ensure header exists ----
+    first_row = _ws.row_values(1)
+    if first_row != HEADERS:
+        _ws.insert_row(HEADERS, index=1)
+
     return _ws
+
 
 # =========================================
 # LOG EVENT
@@ -70,25 +101,33 @@ def log_event_google(
     content_excerpt: Optional[str] = None,
     severity: Optional[str] = None,
     triggered_rules: Optional[str] = None,
-    decision: Optional[str] = None
+    decision: Optional[str] = None,
 ):
     """
     Log event ke Google Sheet.
-    Otomatis membaca username, role, agency_code, session_id dari st.session_state.
-    Selalu menulis 13 kolom.
+    Mengambil konteks user dari st.session_state jika tersedia.
     """
-    if "username" not in st.session_state or "agency_code" not in st.session_state:
-        st.warning("Analytics log skipped: user not logged in yet")
+
+    # lazy import agar analytics tidak hard-depend ke streamlit
+    try:
+        import streamlit as st
+        session = st.session_state
+    except Exception:
+        session = {}
+
+    if not session.get("username") or not session.get("agency_code"):
         return False
 
-    worksheet = _get_sheet()
+    ws = _get_sheet()
+    if ws is None:
+        return False
 
     record = [
         datetime.utcnow().isoformat(),
-        st.session_state.get("session_id", ""),
-        st.session_state.get("username"),
-        st.session_state.get("role", ""),
-        st.session_state.get("agency_code"),
+        session.get("session_id", ""),
+        session.get("username", ""),
+        session.get("role", ""),
+        session.get("agency_code", ""),
         event_type,
         object_type,
         object_id or "",
@@ -96,53 +135,53 @@ def log_event_google(
         severity or "",
         triggered_rules or "",
         decision or "",
-        app_version
+        app_version,
     ]
 
-    try:
-        worksheet.append_row(record)
-        return True
-    except Exception as e:
-        st.error(f"Failed to log event: {e}")
-        return False
+    ws.append_row(record, value_input_option="RAW")
+    return True
+
 
 # =========================================
-# HELPER FUNCTIONS UNTUK TIPE EVENT
+# HELPER FUNCTIONS
 # =========================================
 def log_login():
-    log_event_google(event_type="LOGIN", object_type="SESSION")
+    return log_event_google(event_type="LOGIN", object_type="SESSION")
+
 
 def log_logout():
-    log_event_google(event_type="LOGOUT", object_type="SESSION")
+    return log_event_google(event_type="LOGOUT", object_type="SESSION")
+
 
 def log_submit_content(
     content_id: str,
     content_excerpt: str = "",
     severity: str = "",
-    triggered_rules: str = ""
+    triggered_rules: str = "",
 ):
-    log_event_google(
+    return log_event_google(
         event_type="SUBMIT_CONTENT",
         object_type="CONTENT",
         object_id=content_id,
         content_excerpt=content_excerpt,
         severity=severity,
-        triggered_rules=triggered_rules
+        triggered_rules=triggered_rules,
     )
+
 
 def log_submit_decision(
     content_id: str,
     decision: Optional[str] = None,
     content_excerpt: Optional[str] = None,
     severity: Optional[str] = None,
-    triggered_rules: Optional[str] = None
+    triggered_rules: Optional[str] = None,
 ):
-    log_event_google(
+    return log_event_google(
         event_type="SUBMIT_DECISION",
         object_type="DECISION",
         object_id=content_id,
         decision=decision,
         content_excerpt=content_excerpt,
         severity=severity,
-        triggered_rules=triggered_rules
+        triggered_rules=triggered_rules,
     )
