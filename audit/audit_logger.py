@@ -1,19 +1,10 @@
-import streamlit as st
 from datetime import datetime
 from typing import List, Dict, Any
 
-_AUDIT_KEY = "AUDIT_LOG"
-
-
-# =========================
-# INTERNAL INIT
-# =========================
-def _init_audit_log() -> None:
-    """
-    Initialise audit log container in session_state.
-    """
-    if _AUDIT_KEY not in st.session_state:
-        st.session_state[_AUDIT_KEY] = []
+# ======================================
+# GLOBAL APPEND-ONLY AUDIT STORE (MVP)
+# ======================================
+_AUDIT_LOG: List[Dict[str, Any]] = []
 
 
 # =========================
@@ -30,36 +21,33 @@ def log_decision(
     actor: str,
     actor_role: str,
     status_after: str,
-    agency_code: str | None = None
+    agency_code: str | None = None,
 ) -> None:
     """
     Append a decision record to the audit log.
 
-    This function is intentionally append-only
-    to support tamper-evident audit trails.
+    Append-only, in-memory (MVP).
     """
-    _init_audit_log()
 
     record: Dict[str, Any] = {
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "content_id": content_id,
-        "content_excerpt": content_excerpt[:200],  # 🔒 safety trim
+        "content_excerpt": content_excerpt[:200],
         "decision": decision,
         "reason": reason,
         "severity": severity,
-        "rule_ids": list(rule_ids),                # 🔒 defensive copy
-        "actor": actor,                            # reviewer username
-        "actor_role": actor_role,                  # Reviewer / Admin
-        "agency_code": agency_code,                # 🏢 multi-agency
-        "status_after": status_after
+        "rule_ids": list(rule_ids),
+        "actor": actor,
+        "actor_role": actor_role,
+        "agency_code": agency_code,
+        "status_after": status_after,
     }
 
-    st.session_state[_AUDIT_KEY].append(record)
+    _AUDIT_LOG.append(record)
 
 
 def get_audit_log() -> List[Dict[str, Any]]:
     """
-    Return full audit log (read-only usage expected).
+    Return full audit log (read-only).
     """
-    _init_audit_log()
-    return list(st.session_state[_AUDIT_KEY])      # 🔒 defensive copy
+    return list(_AUDIT_LOG)
