@@ -9,11 +9,8 @@ from google.oauth2.service_account import Credentials
 # CONFIGURATION
 # =========================================
 SERVICE_ACCOUNT_JSON_CONTENT = os.getenv("SERVICE_ACCOUNT_JSON")
-SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")  # WAJIB via secret
+SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
 SHEET_NAME = "AnalyticsLog"
-
-#if not SPREADSHEET_ID:
-#    raise RuntimeError("SPREADSHEET_ID environment variable is not set")
 
 # cache client
 _gc = None
@@ -46,10 +43,8 @@ def _get_sheet():
         return _ws
 
     if not SPREADSHEET_ID:
-        # logging non-fatal
         print("[Analytics] SPREADSHEET_ID not set, analytics disabled")
         return None
-
 
     try:
         if SERVICE_ACCOUNT_JSON_B64:
@@ -65,12 +60,7 @@ def _get_sheet():
         return None
 
     try:
-    #if not SERVICE_ACCOUNT_JSON_CONTENT:
-    #    raise RuntimeError("SERVICE_ACCOUNT_JSON environment variable is not set")
-
-    # ---- Authorize ----
         if _gc is None:
-    #    creds_dict = json.loads(SERVICE_ACCOUNT_JSON_CONTENT)
             creds = Credentials.from_service_account_info(
                 creds_dict,
                 scopes=[
@@ -80,12 +70,10 @@ def _get_sheet():
             )
             _gc = gspread.authorize(creds)
 
-    # ---- Open spreadsheet ----
         if _sh is None:
             _sh = _gc.open_by_key(SPREADSHEET_ID)
 
-    # ---- Get / create worksheet ----
-        if _sh is None:
+        if _ws is None:
             try:
                 _ws = _sh.worksheet(SHEET_NAME)
             except gspread.WorksheetNotFound:
@@ -95,20 +83,12 @@ def _get_sheet():
                     cols=str(len(HEADERS)),
                 )
                 _ws.append_row(HEADERS, value_input_option="RAW")
-            
-        return _ws
 
+        return _ws
 
     except Exception as e:
         print(f"[Analytics] Failed to initialize Google Sheet: {e}")
         return None
-    
-    # ---- Ensure header exists ----
-    #first_row = _ws.row_values(1)
-    #if first_row != HEADERS:
-    #    _ws.insert_row(HEADERS, index=1)
-
-    #return _ws
 
 
 # =========================================
@@ -127,21 +107,27 @@ def log_event_google(
 ):
     """
     Log event ke Google Sheet.
-    Mengambil konteks user dari st.session_state jika tersedia.
     """
 
-    # lazy import agar analytics tidak hard-depend ke streamlit
+    # DEBUG 1
+    print("[Analytics] log_event_google called:", event_type, object_type)
+
     try:
         import streamlit as st
         session = st.session_state
     except Exception:
         session = {}
 
+    # DEBUG 2
+    print("[Analytics] session:", dict(session))
+
     if not session.get("username") or not session.get("agency_code"):
+        print("[Analytics] missing username or agency_code, skip logging")
         return False
 
     ws = _get_sheet()
     if ws is None:
+        print("[Analytics] worksheet not available, skip logging")
         return False
 
     record = [
@@ -160,7 +146,14 @@ def log_event_google(
         app_version,
     ]
 
+    # DEBUG 3
+    print("[Analytics] appending row to Google Sheet")
+
     ws.append_row(record, value_input_option="RAW")
+
+    # DEBUG 4
+    print("[Analytics] append success")
+
     return True
 
 
