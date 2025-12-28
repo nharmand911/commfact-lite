@@ -58,11 +58,10 @@ else:
     # CONTENT DISPLAY
     # =========================
     st.subheader("Content Under Review")
-    st.text_area(
-        label="Review Notes",
-        value=review_text,
-        key="review_notes",
-        label_visibility="collapsed"
+    review_text = st.text_area(
+        "Review / Decision Notes",
+        height=120,
+        placeholder="Add reviewer notes or justification..."
     )
     
     # =========================
