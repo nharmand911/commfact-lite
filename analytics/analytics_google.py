@@ -103,7 +103,7 @@ def _get_sheet():
 
 
 # =========================================
-# LOG EVENT
+# LOG EVENT (CORE)
 # =========================================
 def log_event_google(
     *,
@@ -156,3 +156,26 @@ def log_event_google(
     print("[Analytics] append success")
 
     return True
+
+
+# =========================================
+# HIGH-LEVEL EVENTS (WRAPPERS)
+# =========================================
+def log_login():
+    """
+    Dipanggil saat user login sukses
+    """
+    return log_event_google(
+        event_type="LOGIN",
+        object_type="SESSION",
+    )
+
+
+def log_logout():
+    """
+    Dipanggil saat user logout
+    """
+    return log_event_google(
+        event_type="LOGOUT",
+        object_type="SESSION",
+    )
