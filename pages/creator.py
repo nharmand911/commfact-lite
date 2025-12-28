@@ -90,15 +90,5 @@ if content_text:
             agency_code=st.session_state.get("agency_code"),
         )
 
-        # ✅ Analytics (single entry point)
-        log_submit_content(
-            content_id=record["content_id"],
-            content_excerpt=content_text[:200],
-            severity=severity,
-            triggered_rules=", ".join(
-                [r.get("rule_id", "") for r in triggered_rules]
-            ),
-        )
-
         st.session_state["submit_success"] = True
         st.rerun()
