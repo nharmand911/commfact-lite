@@ -1,6 +1,6 @@
 from datetime import datetime
 from governance.access_control import require_role
-from audit.audit_logger import write_audit_log
+from audit.audit_logger import log_decision
 
 
 def submit_decision(
@@ -11,7 +11,7 @@ def submit_decision(
     reason: str,
     actor_username: str,
     actor_role: str,
-    agency_code: str,
+    agency_code: str | None = None,
 ):
     """
     Submit reviewer decision for a content item.
@@ -38,27 +38,27 @@ def submit_decision(
     # =========================
     # UPDATE CONTENT STATE
     # =========================
-    content["status"] = "DECIDED"
+    content["status"] = decision          # APPROVED / REJECTED
     content["decision"] = decision
-    content["decided_at"] = datetime.utcnow().isoformat()
+    content["decided_at"] = datetime.utcnow().isoformat() + "Z"
 
     # =========================
     # AUDIT LOG (APPEND-ONLY)
     # =========================
-    write_audit_log({
-        "timestamp": datetime.utcnow().isoformat(),
-        "content_id": content.get("content_id"),
-        "content_excerpt": content.get("content", "")[:200],
-        "decision": decision,
-        "reason": reason,
-        "severity": final_severity,
-        "triggered_rules": [
-            r.get("rule_id") for r in validation_result.get("triggered_rules", [])
+    log_decision(
+        content_id=content.get("content_id"),
+        content_excerpt=content.get("content", "")[:200],
+        decision=decision,
+        reason=reason,
+        severity=final_severity,
+        rule_ids=[
+            r.get("rule_id")
+            for r in validation_result.get("triggered_rules", [])
         ],
-        "actor": actor_username,
-        "actor_role": actor_role.lower(),
-        "agency_code": agency_code,
-        "status_after": "DECIDED",
-    })
+        actor=actor_username,
+        actor_role=actor_role.lower(),
+        agency_code=agency_code,
+        status_after=decision,
+    )
 
     return decision
