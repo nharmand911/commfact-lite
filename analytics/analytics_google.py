@@ -1,6 +1,7 @@
 import os
 import json
 import gspread
+import base64
 from datetime import datetime
 from typing import Optional
 from google.oauth2.service_account import Credentials
@@ -9,10 +10,11 @@ from google.oauth2.service_account import Credentials
 # CONFIGURATION
 # =========================================
 SERVICE_ACCOUNT_JSON_CONTENT = os.getenv("SERVICE_ACCOUNT_JSON")
+SERVICE_ACCOUNT_JSON_B64 = os.getenv("SERVICE_ACCOUNT_JSON_B64")
 SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
 SHEET_NAME = "AnalyticsLog"
 
-# cache client
+# cache
 _gc = None
 _sh = None
 _ws = None
@@ -43,23 +45,27 @@ def _get_sheet():
         return _ws
 
     if not SPREADSHEET_ID:
-        print("[Analytics] SPREADSHEET_ID not set, analytics disabled")
+        print("[Analytics] SPREADSHEET_ID not set")
         return None
 
+    # ---- Load service account ----
     try:
         if SERVICE_ACCOUNT_JSON_B64:
+            print("[Analytics] Using SERVICE_ACCOUNT_JSON_B64")
             decoded = base64.b64decode(SERVICE_ACCOUNT_JSON_B64).decode("utf-8")
             creds_dict = json.loads(decoded)
         elif SERVICE_ACCOUNT_JSON_CONTENT:
+            print("[Analytics] Using SERVICE_ACCOUNT_JSON")
             creds_dict = json.loads(SERVICE_ACCOUNT_JSON_CONTENT)
         else:
-            print("[Analytics] No service account secret found, analytics disabled")
+            print("[Analytics] No service account secret found")
             return None
     except Exception as e:
         print(f"[Analytics] Invalid service account secret: {e}")
         return None
 
     try:
+        # ---- Authorize ----
         if _gc is None:
             creds = Credentials.from_service_account_info(
                 creds_dict,
@@ -70,13 +76,17 @@ def _get_sheet():
             )
             _gc = gspread.authorize(creds)
 
+        # ---- Open spreadsheet ----
         if _sh is None:
+            print(f"[Analytics] Opening spreadsheet ID: {SPREADSHEET_ID}")
             _sh = _gc.open_by_key(SPREADSHEET_ID)
 
+        # ---- Worksheet ----
         if _ws is None:
             try:
                 _ws = _sh.worksheet(SHEET_NAME)
             except gspread.WorksheetNotFound:
+                print("[Analytics] Creating worksheet:", SHEET_NAME)
                 _ws = _sh.add_worksheet(
                     title=SHEET_NAME,
                     rows="1000",
@@ -84,6 +94,7 @@ def _get_sheet():
                 )
                 _ws.append_row(HEADERS, value_input_option="RAW")
 
+        print("[Analytics] Worksheet ready:", SHEET_NAME)
         return _ws
 
     except Exception as e:
@@ -105,11 +116,6 @@ def log_event_google(
     triggered_rules: Optional[str] = None,
     decision: Optional[str] = None,
 ):
-    """
-    Log event ke Google Sheet.
-    """
-
-    # DEBUG 1
     print("[Analytics] log_event_google called:", event_type, object_type)
 
     try:
@@ -118,16 +124,15 @@ def log_event_google(
     except Exception:
         session = {}
 
-    # DEBUG 2
     print("[Analytics] session:", dict(session))
 
     if not session.get("username") or not session.get("agency_code"):
-        print("[Analytics] missing username or agency_code, skip logging")
+        print("[Analytics] missing username or agency_code")
         return False
 
     ws = _get_sheet()
     if ws is None:
-        print("[Analytics] worksheet not available, skip logging")
+        print("[Analytics] worksheet not available")
         return False
 
     record = [
@@ -146,57 +151,8 @@ def log_event_google(
         app_version,
     ]
 
-    # DEBUG 3
-    print("[Analytics] appending row to Google Sheet")
-
+    print("[Analytics] appending row:", record)
     ws.append_row(record, value_input_option="RAW")
-
-    # DEBUG 4
     print("[Analytics] append success")
 
     return True
-
-
-# =========================================
-# HELPER FUNCTIONS
-# =========================================
-def log_login():
-    return log_event_google(event_type="LOGIN", object_type="SESSION")
-
-
-def log_logout():
-    return log_event_google(event_type="LOGOUT", object_type="SESSION")
-
-
-def log_submit_content(
-    content_id: str,
-    content_excerpt: str = "",
-    severity: str = "",
-    triggered_rules: str = "",
-):
-    return log_event_google(
-        event_type="SUBMIT_CONTENT",
-        object_type="CONTENT",
-        object_id=content_id,
-        content_excerpt=content_excerpt,
-        severity=severity,
-        triggered_rules=triggered_rules,
-    )
-
-
-def log_submit_decision(
-    content_id: str,
-    decision: Optional[str] = None,
-    content_excerpt: Optional[str] = None,
-    severity: Optional[str] = None,
-    triggered_rules: Optional[str] = None,
-):
-    return log_event_google(
-        event_type="SUBMIT_DECISION",
-        object_type="DECISION",
-        object_id=content_id,
-        decision=decision,
-        content_excerpt=content_excerpt,
-        severity=severity,
-        triggered_rules=triggered_rules,
-    )
