@@ -2,7 +2,6 @@ import streamlit as st
 from utils.auth import check_access, logout_handler
 from core.validation import validate_content
 from core.content_store import add_content_to_queue
-from analytics.analytics_google import log_submit_content
 
 # =========================
 # ACCESS GUARD
