@@ -15,8 +15,7 @@ def submit_decision(
 ):
     """
     Submit reviewer decision for a content item.
-    Content is a dict from content_store (NOT an ORM object).
-    Records the decision to audit log (append-only).
+    Records decision to audit log (append-only).
     """
 
     # =========================
@@ -38,9 +37,9 @@ def submit_decision(
     # =========================
     # UPDATE CONTENT STATE
     # =========================
-    content["status"] = decision          # APPROVED / REJECTED
+    content["status"] = "DECIDED"
     content["decision"] = decision
-    content["decided_at"] = datetime.utcnow().isoformat() + "Z"
+    content["decided_at"] = datetime.utcnow().isoformat()
 
     # =========================
     # AUDIT LOG (APPEND-ONLY)
@@ -58,7 +57,7 @@ def submit_decision(
         actor=actor_username,
         actor_role=actor_role.lower(),
         agency_code=agency_code,
-        status_after=decision,
+        status_after="DECIDED",
     )
 
     return decision

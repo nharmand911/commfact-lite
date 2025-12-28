@@ -1,10 +1,19 @@
+import streamlit as st
 from datetime import datetime
 from typing import List, Dict, Any
 
-# ======================================
-# GLOBAL APPEND-ONLY AUDIT STORE (MVP)
-# ======================================
-_AUDIT_LOG: List[Dict[str, Any]] = []
+_AUDIT_KEY = "AUDIT_LOG"
+
+
+# =========================
+# INTERNAL INIT
+# =========================
+def _init_audit_log() -> None:
+    """
+    Initialise audit log container in session_state.
+    """
+    if _AUDIT_KEY not in st.session_state:
+        st.session_state[_AUDIT_KEY] = []
 
 
 # =========================
@@ -20,14 +29,15 @@ def log_decision(
     rule_ids: List[str],
     actor: str,
     actor_role: str,
-    status_after: str,
-    agency_code: str | None = None,
+    agency_code: str | None,
+    status_after: str
 ) -> None:
     """
     Append a decision record to the audit log.
 
-    Append-only, in-memory (MVP).
+    Append-only, session-bound (Streamlit).
     """
+    _init_audit_log()
 
     record: Dict[str, Any] = {
         "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -43,11 +53,12 @@ def log_decision(
         "status_after": status_after,
     }
 
-    _AUDIT_LOG.append(record)
+    st.session_state[_AUDIT_KEY].append(record)
 
 
 def get_audit_log() -> List[Dict[str, Any]]:
     """
-    Return full audit log (read-only).
+    Return audit log (read-only copy).
     """
-    return list(_AUDIT_LOG)
+    _init_audit_log()
+    return list(st.session_state[_AUDIT_KEY])
