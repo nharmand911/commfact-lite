@@ -63,7 +63,8 @@ else:
         label="Content",
         value=selected.get("content", ""),
         height=220,
-        disabled=True
+        disabled=True,
+        key="content_display"
     )
 
     severity = selected["validation_result"].get("final_severity", "N/A")
@@ -84,7 +85,7 @@ else:
     else:
         st.success(UI.NO_RULE_VIOLATION)
 
-    # Preliminary decision summary (UI only)
+    # Preliminary decision summary (1–2 baris preview)
     st.divider()
     st.subheader("Decision Summary (Preliminary)")
     st.session_state["decision_status"] = (
@@ -94,7 +95,6 @@ else:
     st.session_state["triggered_rules"] = [r.get("rule_id") for r in triggered_rules]
     st.session_state["content_excerpt"] = selected.get("content", "").splitlines()[0][:100]
 
-    # Display preliminary summary
     decision_status = st.session_state["decision_status"]
     risk_level = st.session_state["risk_level"]
     rules = st.session_state["triggered_rules"]
@@ -134,13 +134,15 @@ else:
 
         decision_input = st.selectbox(
             UI.DECISION_SELECT_LABEL,
-            ["REVISION_REQUIRED", "APPROVED"]
+            ["REVISION_REQUIRED", "APPROVED"],
+            key="decision_input_box"
         )
 
         reason_input = st.text_area(
             "Decision Reason (Mandatory)",
             placeholder=UI.DECISION_REASON_PLACEHOLDER,
-            height=120
+            height=120,
+            key="decision_reason_box"
         )
 
         if st.button("Submit Decision", use_container_width=True):
@@ -168,6 +170,8 @@ else:
                         app_version="v0.1-pilot"
                     )
                     st.session_state["decision_submitted"] = True
+                    st.session_state["decision_input"] = decision_input
+                    st.session_state["reason_input"] = reason_input
                     st.success(UI.DECISION_SUBMIT_SUCCESS)
                 except Exception as e:
                     st.error(f"System error: {str(e)}")
@@ -184,8 +188,8 @@ else:
             st.markdown("**Alasan utama:**")
             for rule_id in rules[:3]:
                 st.write(f"• {UI.RULE_LABELS.get(rule_id, rule_id)}")
-        st.markdown(f"**Keputusan Reviewer:** {decision_input}")
-        st.markdown(f"**Alasan Reviewer:** {reason_input}")
+        st.markdown(f"**Keputusan Reviewer:** {st.session_state['decision_input']}")
+        st.markdown(f"**Alasan Reviewer:** {st.session_state['reason_input']}")
         if content_excerpt:
             st.markdown("**Cuplikan Konten:**")
             st.text_area(
