@@ -3,6 +3,8 @@ from utils.auth import check_access, logout_handler
 from core.validation import validate_content
 from core.content_store import add_content_to_queue
 
+from ui.ui_labels import UI  # ✅ gunakan class UI
+
 # =========================
 # ACCESS GUARD
 # =========================
@@ -18,29 +20,26 @@ if "submit_success" not in st.session_state:
 # SIDEBAR (SESSION INFO)
 # =========================
 with st.sidebar:
-    st.subheader("👤 Session")
+    st.subheader(UI.SIDEBAR_SESSION)
     st.caption(
-        f"{st.session_state.get('username', '-')}"
+        f"{st.session_state.get('username', '-')}" 
         f" ({st.session_state.get('role', '-')}) | "
         f"Agency: {st.session_state.get('agency_code', '-')}"
     )
-
     st.divider()
-
-    if st.button("Logout"):
+    if st.button(UI.LOGOUT_BUTTON):
         logout_handler()
         st.switch_page("app.py")
 
 # =========================
 # MAIN CONTENT
 # =========================
-st.title("Content Submission")
-st.caption("Submit content for pre-publication risk validation")
+st.title(UI.CONTENT_SUBMISSION_TITLE)
+st.caption(UI.CONTENT_SUBMISSION_CAPTION)
 
 content_text = st.text_area(
-    "Paste content to be reviewed",
+    UI.CONTENT_PLACEHOLDER,
     height=200,
-    placeholder="Enter caption, press release, or public statement...",
 )
 
 # =========================
@@ -49,24 +48,39 @@ content_text = st.text_area(
 if content_text:
     validation_result = validate_content(content_text)
 
-    st.subheader("Validation Result")
-
     severity = validation_result.get("final_severity", "LOW")
     triggered_rules = validation_result.get("triggered_rules", [])
 
-    if severity == "HIGH":
-        st.error(f"Final Severity: {severity}")
-    elif severity == "MEDIUM":
-        st.warning(f"Final Severity: {severity}")
-    else:
-        st.info(f"Final Severity: {severity}")
+    # =========================
+    # DECISION SUMMARY (UI ONLY, advisory)
+    # =========================
+    st.divider()
+    st.subheader("Decision Summary (Advisory)")
+
+    advisory_status = "STOP" if severity == "HIGH" else "FLAG" if severity == "MEDIUM" else "ALLOW"
+    content_excerpt = content_text.splitlines()[0][:100]  # 1 baris, max 100 chars
+
+    st.markdown(f"### {UI.STATUS_ICONS.get(advisory_status,'')} Status (Advisory): {UI.STATUS_LABELS.get(advisory_status, advisory_status)}")
+    st.markdown(f"**Tingkat Risiko (Advisory):** {UI.RISK_LABELS.get(severity, severity)}")
 
     if triggered_rules:
-        st.warning("Triggered Rules:")
-        for r in triggered_rules:
-            st.write(f"- **{r.get('rule_id')}**: {r.get('description')}")
-    else:
-        st.success("✅ No rule violations detected")
+        st.markdown("**Alasan utama (Advisory):**")
+        for rule_id in [r.get("rule_id") for r in triggered_rules][:3]:
+            st.write(f"• {UI.RULE_LABELS.get(rule_id, rule_id)}")
+
+    if advisory_status in UI.ACTION_HINTS:
+        st.info(f"**Tindakan disarankan (Advisory):** {UI.ACTION_HINTS[advisory_status]}")
+
+    if content_excerpt:
+        st.markdown("**Cuplikan Konten:**")
+        st.text_area(
+            label="Cuplikan Konten",
+            value=content_excerpt,
+            height=50,
+            disabled=True
+        )
+
+    st.caption(f"ℹ️ {UI.SUMMARY_DISCLAIMER}")
 
     st.divider()
 
@@ -74,14 +88,11 @@ if content_text:
     # SUBMIT AREA
     # =========================
     notification_slot = st.empty()
-
     if st.session_state.get("submit_success"):
-        notification_slot.success(
-            "✅ Content successfully submitted to reviewer queue"
-        )
+        notification_slot.success(UI.SUBMIT_SUCCESS_MSG)
         st.session_state["submit_success"] = False
 
-    if st.button("📤 Submit for Review", use_container_width=True):
+    if st.button(UI.SUBMIT_BUTTON, use_container_width=True):
         # Save content
         record = add_content_to_queue(
             content_text=content_text,
@@ -89,6 +100,5 @@ if content_text:
             created_by=st.session_state.get("username"),
             agency_code=st.session_state.get("agency_code"),
         )
-
         st.session_state["submit_success"] = True
         st.rerun()
