@@ -54,6 +54,19 @@ else:
         list(content_map.keys())
     )
     selected = pending_contents[content_map[selected_label]]
+    current_content_id = selected.get("content_id")
+
+
+    # =========================
+    # 🔑 RESET STATE JIKA PINDAH KONTEN
+    # =========================
+    if st.session_state.get("active_content_id") != current_content_id:
+        st.session_state["active_content_id"] = current_content_id
+        st.session_state["decision_submitted"] = False
+        st.session_state.pop("decision_input", None)
+        st.session_state.pop("reason_input", None)
+
+
 
     # =========================
     # STAGE 1: CONTENT & PRELIMINARY DECISION SUMMARY
@@ -64,7 +77,7 @@ else:
         value=selected.get("content", ""),
         height=220,
         disabled=True,
-        key="content_display"
+        key=f"content_display_{current_content_id}"
     )
 
     severity = selected["validation_result"].get("final_severity", "N/A")
@@ -135,17 +148,17 @@ else:
         decision_input = st.selectbox(
             UI.DECISION_SELECT_LABEL,
             ["REVISION_REQUIRED", "APPROVED"],
-            key="decision_input_box"
+            key=f"decision_input_{current_content_id}"
         )
 
         reason_input = st.text_area(
             "Decision Reason (Mandatory)",
             placeholder=UI.DECISION_REASON_PLACEHOLDER,
             height=120,
-            key="decision_reason_box"
+            key=f"decision_reason_{current_content_id}"
         )
 
-        if st.button("Submit Decision", use_container_width=True):
+        if st.button("Submit Decision", key=f"submit_{current_content_id}", use_container_width=True):
             if not reason_input.strip():
                 st.error(UI.DECISION_REASON_ERROR)
             else:
