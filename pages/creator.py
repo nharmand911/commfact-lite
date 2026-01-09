@@ -58,7 +58,7 @@ if content_text:
     st.subheader("Validation Signal (System Advisory)")
 
     advisory_status = "STOP" if severity == "HIGH" else "FLAG" if severity == "MEDIUM" else "ALLOW"
-    content_excerpt = content_text.splitlines()[0][:100]  # 1 baris, max 100 chars
+#    content_excerpt = content_text.splitlines()[0][:100]  # 1 baris, max 100 chars
 
     st.markdown(
         f"### {UI.STATUS_ICONS.get(advisory_status,'')} "
@@ -75,14 +75,14 @@ if content_text:
 #    if advisory_status in UI.ACTION_HINTS:
 #        st.info(f"**Tindakan disarankan (Advisory):** {UI.ACTION_HINTS[advisory_status]}")
 
-    if content_excerpt:
+#    if content_excerpt:
 #        st.markdown("**Cuplikan Konten:**")
-        st.text_area(
-            label="Cuplikan Konten",
-            value=content_excerpt,
-            height=50,
-            disabled=True
-        )
+#        st.text_area(
+#            label="Cuplikan Konten",
+#            value=content_excerpt,
+#            height=50,
+#            disabled=True
+#        )
 
     st.caption(f"ℹ️ {UI.VALIDATION_DISCLAIMER}")
 
