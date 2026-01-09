@@ -64,65 +64,81 @@ class UI:
     # RULE → HUMAN-READABLE LABEL
     # =========================
     RULE_LABELS = {
-        "AbsoluteClaimRule": "Mengandung klaim absolut tanpa batasan",
-        "SuperiorityClaimRule": "Mengandung klaim superioritas",
-        "GuaranteeClaimRule": "Menyatakan jaminan hasil",
-        "HealthBenefitClaimRule": "Mengklaim manfaat kesehatan tanpa bukti",
-        "RiskFramingRule": "Menyajikan risiko secara menyesatkan",
-        "NeutralInformationRule": "Informasi netral",
+        "AbsoluteClaimRule": "Klaim absolut tanpa batasan",
+        "SuperiorityClaimRule": "Klaim superioritas",
+        "GuaranteeClaimRule": "Pernyataan jaminan hasil",
+        "HealthBenefitClaimRule": "Klaim manfaat kesehatan tanpa bukti",
+        "RiskFramingRule": "Framing risiko berpotensi menyesatkan",
+        "NeutralInformationRule": "Informasi bersifat netral",
         "AmbiguousMarketingRule": "Klaim marketing ambigu",
-        "BeforeAfterImprovementRule": "Membandingkan sebelum-sesudah tanpa data jelas"
+        "BeforeAfterImprovementRule": "Perbandingan sebelum-sesudah tanpa data jelas"
     }
 
     # =========================
     # ACTION HINTS (STATIC)
     # =========================
-    ACTION_HINTS = {
-        "FLAG": (
-            "Pertimbangkan meninjau ulang wording klaim, "
-            "menambahkan konteks, atau memperjelas batasan."
-        ),
-        "STOP": (
-            "Konten sebaiknya direvisi sebelum dipublikasikan. "
-            "Hindari klaim absolut, jaminan hasil, atau superioritas tanpa dasar."
-        )
-    }
+#    ACTION_HINTS = {
+#        "FLAG": (
+#            "Pertimbangkan meninjau ulang wording klaim, "
+#            "menambahkan konteks, atau memperjelas batasan."
+#        ),
+#        "STOP": (
+#            "Konten sebaiknya direvisi sebelum dipublikasikan. "
+#            "Hindari klaim absolut, jaminan hasil, atau superioritas tanpa dasar."
+#        )
+#    }
+
+    # =========================
+    # VALIDATION / SUMMARY DISCLAIMERS
+    # =========================
+    VALIDATION_DISCLAIMER = (
+        "Hasil ini merupakan sinyal validasi otomatis sistem COMMFACT "
+        "dan bukan merupakan keputusan, persetujuan, atau penolakan konten."
+    )
+
+    REVIEW_SUMMARY_DISCLAIMER = (
+        "Ringkasan ini ditujukan untuk mendukung proses review manusia "
+        "selama fase pilot dan bukan merupakan artefak keputusan sistem."
+    )
 
     # =========================
     # DECISION SUMMARY DISCLAIMER
     # =========================
-    SUMMARY_DISCLAIMER = (
-        "Ringkasan ini bersifat informatif untuk membantu pemahaman pengguna. "
-        "Audit log teknis tetap menjadi sumber akuntabilitas utama."
-    )
+#    SUMMARY_DISCLAIMER = (
+#        "Ringkasan ini bersifat informatif untuk membantu pemahaman pengguna. "
+#        "Audit log teknis tetap menjadi sumber akuntabilitas utama."
+#    )
+    
 
     # =========================
     # CREATOR PAGE
     # =========================
     CONTENT_SUBMISSION_TITLE = "Content Submission"
-    CONTENT_SUBMISSION_CAPTION = "Submit content for pre-publication risk validation"
+    CONTENT_SUBMISSION_CAPTION = "Submit content for automated risk validation prior to review"
     CONTENT_PLACEHOLDER = "Enter caption, press release, or public statement..."
-    VALIDATION_RESULT_TITLE = "Validation Result"
-    NO_RULE_VIOLATION = "✅ No rule violations detected"
-    TRIGGERED_RULES_LABEL = "Triggered Rules:"
-    SUBMIT_SUCCESS_MSG = "✅ Content successfully submitted to reviewer queue"
-    SUBMIT_BUTTON = "📤 Submit for Review"
+
+    VALIDATION_RESULT_TITLE = "Validation Signal (System Advisory)"
+    NO_RULE_VIOLATION = "✅ Tidak terdeteksi indikasi pelanggaran aturan"
+    TRIGGERED_RULES_LABEL = "Indikasi aturan terdeteksi:"
+    SUBMIT_SUCCESS_MSG = "✅ Konten berhasil dikirim ke antrian review"
+    SUBMIT_BUTTON = "📤 Submit for Human Review"
 
     # =========================
     # REVIEWER PAGE
     # =========================
-    REVIEW_TITLE = "Review & Decision"
-    REVIEW_CAPTION = "Governance decision panel"
+    REVIEW_TITLE = "Content Review"
+    REVIEW_CAPTION = "Human governance review panel"
     CONTENT_UNDER_REVIEW = "📄 Content Under Review"
-    REVIEWER_DECISION_TITLE = "📝 Reviewer Decision"
-    DECISION_SELECT_LABEL = "Decision"
-    DECISION_REASON_PLACEHOLDER = "Explain the decision and justification..."
-    DECISION_REASON_ERROR = "🚨 Decision reason is mandatory."
-    DECISION_SUBMIT_SUCCESS = "✅ Decision recorded and content locked"
+
+    REVIEWER_DECISION_TITLE = "📝 Reviewer Decision (Human Judgment)"
+    DECISION_SELECT_LABEL = "Reviewer Decision"
+    DECISION_REASON_PLACEHOLDER = "Jelaskan pertimbangan dan justifikasi keputusan..."
+    DECISION_REASON_ERROR = "🚨 Alasan keputusan wajib diisi."
+    DECISION_SUBMIT_SUCCESS = "✅ Keputusan reviewer tercatat dan konten dikunci"
 
     # =========================
     # AUDIT LOG
     # =========================
     AUDIT_LOG_TITLE = "📜 Audit Log (Read-Only)"
-    AUDIT_LOG_CAPTION = "Permanent governance record"
+    AUDIT_LOG_CAPTION = "Permanent system record for governance accountability"
     AUDIT_LOG_EMPTY = "Audit log is empty."

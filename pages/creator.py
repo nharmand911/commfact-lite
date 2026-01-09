@@ -55,24 +55,28 @@ if content_text:
     # DECISION SUMMARY (UI ONLY, advisory)
     # =========================
     st.divider()
-    st.subheader("Decision Summary (Advisory)")
+    st.subheader("Validation Signal (System Advisory)")
 
     advisory_status = "STOP" if severity == "HIGH" else "FLAG" if severity == "MEDIUM" else "ALLOW"
     content_excerpt = content_text.splitlines()[0][:100]  # 1 baris, max 100 chars
 
-    st.markdown(f"### {UI.STATUS_ICONS.get(advisory_status,'')} Status (Advisory): {UI.STATUS_LABELS.get(advisory_status, advisory_status)}")
-    st.markdown(f"**Tingkat Risiko (Advisory):** {UI.RISK_LABELS.get(severity, severity)}")
+    st.markdown(
+        f"### {UI.STATUS_ICONS.get(advisory_status,'')} "
+        f"Validation Signal: {UI.STATUS_LABELS.get(advisory_status, advisory_status)}"
+    )
+#    st.markdown(f"### {UI.STATUS_ICONS.get(advisory_status,'')} Status (Advisory): {UI.STATUS_LABELS.get(advisory_status, advisory_status)}")
+    st.markdown(f"**Tingkat Risiko (berdasarkan validasi sistem):** {UI.RISK_LABELS.get(severity, severity)}")
 
     if triggered_rules:
-        st.markdown("**Alasan utama (Advisory):**")
+        st.markdown("**Indikasi pelanggaran terdeteksi:**")
         for rule_id in [r.get("rule_id") for r in triggered_rules][:3]:
             st.write(f"• {UI.RULE_LABELS.get(rule_id, rule_id)}")
 
-    if advisory_status in UI.ACTION_HINTS:
-        st.info(f"**Tindakan disarankan (Advisory):** {UI.ACTION_HINTS[advisory_status]}")
+#    if advisory_status in UI.ACTION_HINTS:
+#        st.info(f"**Tindakan disarankan (Advisory):** {UI.ACTION_HINTS[advisory_status]}")
 
     if content_excerpt:
-        st.markdown("**Cuplikan Konten:**")
+#        st.markdown("**Cuplikan Konten:**")
         st.text_area(
             label="Cuplikan Konten",
             value=content_excerpt,
@@ -80,7 +84,7 @@ if content_text:
             disabled=True
         )
 
-    st.caption(f"ℹ️ {UI.SUMMARY_DISCLAIMER}")
+    st.caption(f"ℹ️ {UI.VALIDATION_DISCLAIMER}")
 
     st.divider()
 

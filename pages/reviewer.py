@@ -113,19 +113,27 @@ else:
     rules = st.session_state["triggered_rules"]
     content_excerpt = st.session_state["content_excerpt"]
 
-    st.markdown(f"### {UI.STATUS_ICONS.get(decision_status, '')} Status: {UI.STATUS_LABELS.get(decision_status, decision_status)}")
-    st.markdown(f"**Tingkat Risiko:** {UI.RISK_LABELS.get(risk_level, risk_level)}")
+    st.markdown(
+        f"### {UI.STATUS_ICONS.get(decision_status, '')} "
+        f"Status (UI Preview): {UI.STATUS_LABELS.get(decision_status, decision_status)}"
+    )
+#    st.markdown(f"### {UI.STATUS_ICONS.get(decision_status, '')} Status: {UI.STATUS_LABELS.get(decision_status, decision_status)}")
+    st.markdown(
+        f"**Tingkat Risiko (berdasarkan validasi otomatis):** "
+        f"{UI.RISK_LABELS.get(risk_level, risk_level)}"
+    )
+#    st.markdown(f"**Tingkat Risiko:** {UI.RISK_LABELS.get(risk_level, risk_level)}")
 
     if rules:
         st.markdown("**Alasan utama:**")
         for rule_id in rules[:3]:
             st.write(f"• {UI.RULE_LABELS.get(rule_id, rule_id)}")
 
-    if decision_status in UI.ACTION_HINTS:
-        st.info(f"**Tindakan disarankan:** {UI.ACTION_HINTS[decision_status]}")
+#    if decision_status in UI.ACTION_HINTS:
+#        st.info(f"**Tindakan disarankan:** {UI.ACTION_HINTS[decision_status]}")
 
     if content_excerpt:
-        st.markdown("**Cuplikan Konten:**")
+#        st.markdown("**Cuplikan Konten:**")
         st.text_area(
             label="Cuplikan Konten",
             value=content_excerpt,
@@ -133,7 +141,7 @@ else:
             disabled=True,
             key="preview_excerpt"  # ✅ key unik
         )
-    st.caption(f"ℹ️ {UI.SUMMARY_DISCLAIMER}")
+    st.caption(f"ℹ️ {UI.REVIEW_SUMMARY_DISCLAIMER}")
 
     # =========================
     # STAGE 2: INPUT DECISION
@@ -190,11 +198,16 @@ else:
                     st.error(f"System error: {str(e)}")
 
     # =========================
-    # STAGE 3: FINAL DECISION SUMMARY
+    # STAGE 3: REVIEWER DECISION SUMMARY
     # =========================
     if st.session_state.get("decision_submitted"):
         st.divider()
-        st.subheader("Final Decision Summary")
+        st.subheader("Reviewer Decision Summary (MVP Preview)")
+        st.caption(
+            "Tampilan ini adalah ringkasan UI untuk keperluan pilot. "
+            "Bukan artefak keputusan sistem dan tidak dapat digunakan sebagai bukti formal."
+        )      
+#        st.subheader("Final Decision Summary")
         st.markdown(f"### {UI.STATUS_ICONS.get(decision_status, '')} Status: {UI.STATUS_LABELS.get(decision_status, decision_status)}")
         st.markdown(f"**Tingkat Risiko:** {UI.RISK_LABELS.get(risk_level, risk_level)}")
         if rules:
@@ -204,7 +217,7 @@ else:
         st.markdown(f"**Keputusan Reviewer:** {st.session_state['decision_input']}")
         st.markdown(f"**Alasan Reviewer:** {st.session_state['reason_input']}")
         if content_excerpt:
-            st.markdown("**Cuplikan Konten:**")
+#            st.markdown("**Cuplikan Konten:**")
             st.text_area(
                 label="Cuplikan Konten",
                 value=content_excerpt,
@@ -212,6 +225,10 @@ else:
                 disabled=True,
                 key="final_excerpt"  # ✅ key unik berbeda
             )
+        st.caption(
+            "ℹ️ Ringkasan ini bersifat sementara dan hanya untuk membantu proses review manusia "
+            "selama fase pilot. Artefak keputusan sistem akan tersedia pada fase produksi."
+        )
 
 # =========================
 # AUDIT LOG (READ-ONLY)
