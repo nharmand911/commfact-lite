@@ -49,9 +49,10 @@ class UI:
     }
 
     STATUS_LABELS = {
-        "ALLOW": "Diizinkan",
-        "FLAG": "Perlu Review",
-        "STOP": "Tidak Disarankan"
+        "ALLOW": "Tidak ada hambatan sistem",
+        "FLAG": "Perlu perhatian",
+        "STOP": "Risiko tinggi terdeteksi",
+        "REJECT": "Dihentikan sistem"
     }
 
     RISK_LABELS = {
@@ -61,11 +62,18 @@ class UI:
     }
 
     # =========================
+    # IF ALLOW + HIGH
+    # ========================= 
+    ALLOW_WITH_RISK_NOTE = (
+        "Status ini tidak berarti konten aman sepenuhnya. "
+        "Perhatikan tingkat risiko dan indikasi aturan yang terdeteksi."
+    )
+
+    # =========================
     # RULE → HUMAN-READABLE LABEL
     # =========================
     RULE_LABELS = {
         "AbsoluteClaimRule": "Klaim absolut tanpa batasan",
-        "SuperiorityClaimRule": "Klaim superioritas",
         "GuaranteeClaimRule": "Pernyataan jaminan hasil",
         "HealthBenefitClaimRule": "Klaim manfaat kesehatan tanpa bukti",
         "RiskFramingRule": "Framing risiko berpotensi menyesatkan",
@@ -73,20 +81,6 @@ class UI:
         "AmbiguousMarketingRule": "Klaim marketing ambigu",
         "BeforeAfterImprovementRule": "Perbandingan sebelum-sesudah tanpa data jelas"
     }
-
-    # =========================
-    # ACTION HINTS (STATIC)
-    # =========================
-#    ACTION_HINTS = {
-#        "FLAG": (
-#            "Pertimbangkan meninjau ulang wording klaim, "
-#            "menambahkan konteks, atau memperjelas batasan."
-#        ),
-#        "STOP": (
-#            "Konten sebaiknya direvisi sebelum dipublikasikan. "
-#            "Hindari klaim absolut, jaminan hasil, atau superioritas tanpa dasar."
-#        )
-#    }
 
     # =========================
     # VALIDATION / SUMMARY DISCLAIMERS
@@ -102,22 +96,12 @@ class UI:
     )
 
     # =========================
-    # DECISION SUMMARY DISCLAIMER
-    # =========================
-#    SUMMARY_DISCLAIMER = (
-#        "Ringkasan ini bersifat informatif untuk membantu pemahaman pengguna. "
-#        "Audit log teknis tetap menjadi sumber akuntabilitas utama."
-#    )
-    
-
-    # =========================
     # CREATOR PAGE
     # =========================
     CONTENT_SUBMISSION_TITLE = "Content Submission"
     CONTENT_SUBMISSION_CAPTION = "Submit content for automated risk validation prior to review"
     CONTENT_PLACEHOLDER = "Enter caption, press release, or public statement..."
 
-    VALIDATION_RESULT_TITLE = "Validation Signal (System Advisory)"
     NO_RULE_VIOLATION = "✅ Tidak terdeteksi indikasi pelanggaran aturan"
     TRIGGERED_RULES_LABEL = "Indikasi aturan terdeteksi:"
     SUBMIT_SUCCESS_MSG = "✅ Konten berhasil dikirim ke antrian review"

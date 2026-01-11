@@ -1,16 +1,49 @@
+"""
+COMMFACT Tier-0 Rule Definitions (HARD LAW)
+------------------------------------------
+Tier-0 rules represent non-negotiable legal / ethical prohibitions.
+
+Characteristics:
+- Severity is FIXED (HIGH)
+- Cannot be downgraded by policy or UI
+- Violation = governance red flag
+
+This module defines non-negotiable validation constraints.
+Tier-0 rules:
+- Are evaluated before any Tier-1 rules
+- Do not use scoring or severity
+- Cannot be overridden or configured via CSV
+- Result in immediate STOP when violated
+"""
+
 from rules.rule_base import Rule
+import re
+
+
+# =========================================================
+# ABSOLUTE CLAIM RULE (TIER-0)
+# =========================================================
 
 class AbsoluteClaimRule(Rule):
     def __init__(self):
         super().__init__(
-            rule_id="LGL-ABS-01",  # Diperbarui sesuai mapping
-            category="Legal & Compliance",  # Diperbarui
-            severity="HIGH",  # Diperbarui sesuai mapping (HIGH)
+            rule_id="LGL-ABS-01",
+            category="Legal & Compliance",
+            severity="HIGH",
             description="Deteksi klaim absolut tanpa pengecualian dalam konten",
-            rationale="Klaim absolut dilarang oleh BPOM, EPI, dan Kominfo karena berpotensi menyesatkan dan menurunkan kapasitas kritis audiens"
+            rationale=(
+                "Klaim absolut dilarang oleh BPOM, EPI, dan Kominfo "
+                "karena berpotensi menyesatkan dan menurunkan kapasitas kritis audiens"
+            )
         )
 
     def detect(self, text: str) -> bool:
+        if not text:
+            return False
+
+        text_lower = text.lower()
+
+        # Keyword absolut eksplisit
         keywords = [
             "100%",
             "100 persen",
@@ -26,69 +59,48 @@ class AbsoluteClaimRule(Rule):
             "sempurna",
             "tak mungkin gagal"
         ]
-        # Tambahan: deteksi pola absolut umum
-        patterns = [
-            "tanpa (sama sekali|sedikitpun|sedikit pun)",
-            "tidak ada (risiko|resiko|bahaya|kegagalan)",
-            "jamin (aman|aman 100%|aman seratus persen)"
-        ]
-        
-        text_lower = text.lower()
-        
-        # Deteksi keyword sederhana
+
         if any(k in text_lower for k in keywords):
             return True
-            
-        # Deteksi pola (basic pattern matching)
+
+        # Pola absolut implisit (basic regex, deterministic)
+        patterns = [
+            r"tanpa\s+(sama sekali|sedikitpun|sedikit pun)",
+            r"tidak ada\s+(risiko|resiko|bahaya|kegagalan)",
+            r"jamin\s+(aman|aman\s*100%|aman\s*seratus\s*persen)"
+        ]
+
         for pattern in patterns:
-            import re
             if re.search(pattern, text_lower):
                 return True
-                
+
         return False
 
-class SuperiorityClaimRule(Rule):
-    def __init__(self):
-        super().__init__(
-            rule_id="LGL-SUP-01",  # Diperbarui sesuai mapping
-            category="Brand & Message Consistency",  # Tetap (sesuai konteks klaim)
-            severity="HIGH",  # Diperbarui (MEDIUM-HIGH → HIGH untuk konservatif)
-            description="Deteksi klaim keunggulan relatif tanpa dasar pembanding yang jelas",
-            rationale="Klaim superioritas harus dapat dibuktikan menurut EPI, KPI, dan Kominfo; berisiko tinggi secara reputasi dan rawan dipersoalkan kompetitor"
-        )
 
-    def detect(self, text: str) -> bool:
-        keywords = [
-            "terbaik",
-            "nomor satu",
-            "no. 1",
-            "no 1",
-            "paling direkomendasikan",
-            "paling unggul",
-            "paling baik",
-            "lebih baik dari",
-            "unggul daripada",
-            "top of the line",
-            "premium",
-            "terhebat",
-            "terdepan",
-            "paling laris",
-            "paling banyak dipakai",
-            "paling banyak digunakan"
-        ]
-        return any(k.lower() in text.lower() for k in keywords)
+# =========================================================
+# GUARANTEE CLAIM RULE (TIER-0)
+# =========================================================
 
 class GuaranteeClaimRule(Rule):
     def __init__(self):
         super().__init__(
-            rule_id="LGL-GUA-01",  # Diperbarui sesuai mapping
-            category="Legal & Compliance",  # Tetap
-            severity="HIGH",  # Tetap sesuai mapping
-            description="Deteksi klaim yang menjanjikan hasil pasti, jaminan, atau kepastian outcome",
-            rationale="Klaim jaminan dilarang oleh BPOM, Kemenkes, dan UU Perlindungan Konsumen; merupakan red flag tertinggi dan sering jadi sumber krisis hukum"
+            rule_id="LGL-GUA-01",
+            category="Legal & Compliance",
+            severity="HIGH",
+            description="Deteksi klaim yang menjanjikan hasil pasti atau kepastian outcome",
+            rationale=(
+                "Klaim jaminan dilarang oleh BPOM, Kemenkes, dan UU Perlindungan Konsumen; "
+                "merupakan red flag tertinggi dan sering menjadi sumber risiko hukum"
+            )
         )
 
     def detect(self, text: str) -> bool:
+        if not text:
+            return False
+
+        text_lower = text.lower()
+
+        # Keyword jaminan eksplisit
         keywords = [
             "dijamin",
             "jaminan",
@@ -97,7 +109,6 @@ class GuaranteeClaimRule(Rule):
             "pasti sukses",
             "100% efektif",
             "seratus persen efektif",
-            "efektifitas absolut",
             "tanpa efek samping",
             "jamin kesembuhan",
             "jamin keberhasilan",
@@ -108,25 +119,19 @@ class GuaranteeClaimRule(Rule):
             "hasil terjamin",
             "jamin aman"
         ]
-        
-        # Tambahan: deteksi klaim medis yang dijamin
-        medical_guarantee_phrases = [
-            "jamin kesembuhan",
+
+        if any(k in text_lower for k in keywords):
+            return True
+
+        # Klaim jaminan medis spesifik
+        medical_guarantees = [
             "pasti sehat",
             "jamin pulih",
             "sembuh total",
             "sembuh 100%"
         ]
-        
-        text_lower = text.lower()
-        
-        # Deteksi keyword dasar
-        if any(k in text_lower for k in keywords):
+
+        if any(m in text_lower for m in medical_guarantees):
             return True
-            
-        # Deteksi kombinasi "jamin" + outcome medis
-        for phrase in medical_guarantee_phrases:
-            if phrase in text_lower:
-                return True
-                
+
         return False

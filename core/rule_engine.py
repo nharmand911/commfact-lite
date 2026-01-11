@@ -73,7 +73,12 @@ def evaluate(content: str, context: Dict, rules: List[Dict]) -> Dict:
             violations.append(violation)
             total_score += rule_score
 
+    # Derive preliminary decision based on score
     decision = _derive_decision(total_score)
+
+    # Override decision if system explicitly recommends STOP
+    if context.get("system_recommendation") == "REJECT":
+        decision = "STOP"
 
     return {
         "decision": decision,
@@ -95,6 +100,7 @@ def _derive_decision(score: int) -> str:
     - score >= REVIEW_THRESHOLD → REVIEW
     - score == 0 → ALLOW
     """
+    print(f"DEBUG score:",score)
 
     if score >= REJECT_THRESHOLD:
         return "REJECT"

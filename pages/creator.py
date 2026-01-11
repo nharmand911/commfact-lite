@@ -2,7 +2,6 @@ import streamlit as st
 from utils.auth import check_access, logout_handler
 from core.validation import validate_content
 from core.content_store import add_content_to_queue
-
 from ui.ui_labels import UI  # ✅ gunakan class UI
 
 # =========================
@@ -42,63 +41,85 @@ content_text = st.text_area(
     height=200,
 )
 
+
 # =========================
 # VALIDATION
 # =========================
 if content_text:
-    validation_result = validate_content(content_text)
+    validation_result = validate_content(content=content_text)
 
+    decision = validation_result.get("decision", "ALLOW")
     severity = validation_result.get("final_severity", "LOW")
     triggered_rules = validation_result.get("triggered_rules", [])
 
     # =========================
-    # DECISION SUMMARY (UI ONLY, advisory)
+    # VALIDATION SIGNAL (UI ONLY — NOT A DECISION)
     # =========================
     st.divider()
-    st.subheader("Validation Signal (System Advisory)")
+    st.subheader("UI Preview")
 
-    advisory_status = "STOP" if severity == "HIGH" else "FLAG" if severity == "MEDIUM" else "ALLOW"
-#    content_excerpt = content_text.splitlines()[0][:100]  # 1 baris, max 100 chars
-
+    # Gunakan decision dari rule engine
     st.markdown(
-        f"### {UI.STATUS_ICONS.get(advisory_status,'')} "
-        f"Validation Signal: {UI.STATUS_LABELS.get(advisory_status, advisory_status)}"
+        f"### {UI.STATUS_ICONS.get(decision,'')} "
+        f"Validation Signal: {UI.STATUS_LABELS.get(decision, decision)}"
     )
-#    st.markdown(f"### {UI.STATUS_ICONS.get(advisory_status,'')} Status (Advisory): {UI.STATUS_LABELS.get(advisory_status, advisory_status)}")
-    st.markdown(f"**Tingkat Risiko (berdasarkan validasi sistem):** {UI.RISK_LABELS.get(severity, severity)}")
+
+    # Tampilkan tingkat risiko sistem    
+    st.markdown(
+        f"**Tingkat Risiko (berdasarkan validasi sistem):** "
+        f"{UI.RISK_LABELS.get(severity, severity)}"
+    )
 
     if triggered_rules:
-        st.markdown("**Indikasi pelanggaran terdeteksi:**")
-        for rule_id in [r.get("rule_id") for r in triggered_rules][:3]:
-            st.write(f"• {UI.RULE_LABELS.get(rule_id, rule_id)}")
+        st.markdown("**Indikasi pola berisiko yang terdeteksi sistem::**")
+        for r in triggered_rules:
+            st.write(
+                f"- **{UI.RULE_LABELS.get(r.get('rule_id'), r.get('rule_id'))}**: "
+                f"{r.get('description','')} {r.get('message','')}"
+            )
 
-#    if advisory_status in UI.ACTION_HINTS:
-#        st.info(f"**Tindakan disarankan (Advisory):** {UI.ACTION_HINTS[advisory_status]}")
-
-#    if content_excerpt:
-#        st.markdown("**Cuplikan Konten:**")
-#        st.text_area(
-#            label="Cuplikan Konten",
-#            value=content_excerpt,
-#            height=50,
-#            disabled=True
-#        )
+    # =========================
+    # UX GOVERNANCE NOTE (ALLOW + HIGH RISK)
+    # =========================
+    if decision == "ALLOW" and severity == "HIGH":
+        st.info(UI.ALLOW_WITH_RISK_NOTE)
 
     st.caption(f"ℹ️ {UI.VALIDATION_DISCLAIMER}")
 
-    st.divider()
+    # =========================
+    # SPECIAL RULE HANDLING (STOP/REJECT)
+    # =========================
+    submit_disabled = False
+
+    high_risk_rules = [r["rule_id"] for r in triggered_rules if r.get("severity") == "HIGH"]
+
+    # LGL-ABS-01 → advisory HIGH risk, submit tetap boleh
+    if "LGL-ABS-01" in high_risk_rules:
+        st.info("⚠️ Konten mengandung klaim absolut (LGL-ABS-01). Periksa risiko sebelum submit.")
+
+    # Tombol submit disable jika decision STOP/REJECT atau LGL-GUA-01
+    if decision in ["STOP", "REJECT"] or "LGL-GUA-01" in high_risk_rules:
+        submit_disabled = True
+        if "LGL-GUA-01" in high_risk_rules:
+            st.warning("❌ Konten mengandung klaim jaminan hasil pasti (LGL-GUA-01). Tidak bisa dikirim.")
+          
+    # Tombol submit tetap disable jika decision STOP/REJECT
+    if decision in ["STOP", "REJECT"]:
+        submit_disabled = True
 
     # =========================
     # SUBMIT AREA
     # =========================
+    st.divider()    
     notification_slot = st.empty()
     if st.session_state.get("submit_success"):
         notification_slot.success(UI.SUBMIT_SUCCESS_MSG)
         st.session_state["submit_success"] = False
 
-    if st.button(UI.SUBMIT_BUTTON, use_container_width=True):
-        # Save content
-        record = add_content_to_queue(
+    submit_slot = st.empty()
+    if submit_slot.button(UI.SUBMIT_BUTTON, use_container_width=True, disabled=submit_disabled):
+        # Simpan konten
+        add_content_to_queue(
             content_text=content_text,
             validation_result=validation_result,
             created_by=st.session_state.get("username"),

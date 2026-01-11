@@ -90,22 +90,9 @@ else:
         st.error("CRITICAL: Content has no immutable severity. Review blocked.")
         st.stop()
 
-
-
-
     decision = engine_result.get("decision", "N/A")
     score = engine_result.get("score", 0)
     violations = engine_result.get("violations", [])
-
-    # Map Tier 1 decision → UI severity (untuk backward UI)
-#    if decision == "REJECT":
-#        severity = "HIGH"
-#    elif decision == "REVIEW":
-#        severity = "MEDIUM"
-#    else:
-#        severity = "LOW"
-#    severity = selected["validation_result"].get("final_severity", "N/A")
-#    triggered_rules = selected["validation_result"].get("triggered_rules", [])
 
     # =========================
     # VALIDATION RESULT
@@ -124,6 +111,7 @@ else:
             st.write(
                 f"- **{UI.RULE_LABELS.get(r.get('rule_id'), r.get('rule_id'))}**: "
                 f"{r.get('description','')}"
+                f"{r.get('message','')}"
             )
     else:
         if severity in ("HIGH", "MEDIUM"):
@@ -139,64 +127,38 @@ else:
     # PRELIMINARY DECISION SUMMARY (UI ONLY)
     # =========================
     st.divider()
-    st.subheader("Decision Summary (Preliminary)")
+    st.subheader("UI Preview")
     
-    decision_status = (
+    ui_risk_signal = (
         "STOP" if severity == "HIGH"
         else "FLAG" if severity == "MEDIUM"
         else "ALLOW"
     )
- #   st.session_state["decision_status"] = (
- #       "STOP" if severity == "HIGH" else "FLAG" if severity == "MEDIUM" else "ALLOW"
- #   )
     
-    st.session_state["decision_status"] = decision_status
+    st.session_state["decision_status"] = ui_risk_signal
     st.session_state["risk_level"] = severity
     st.session_state["triggered_rules"] = [r.get("rule_id") for r in triggered_rules]
     st.session_state["content_excerpt"] = selected.get("content", "").splitlines()[0][:100]
 
-#    st.session_state["risk_level"] = severity
-#    st.session_state["triggered_rules"] = [v.get("rule_id") for v in violations]
-#    st.session_state["triggered_rules"] = [r.get("rule_id") for r in triggered_rules]
-#    st.session_state["content_excerpt"] = selected.get("content", "").splitlines()[0][:100]
-
-#    decision_status = st.session_state["decision_status"]
-#    risk_level = st.session_state["risk_level"]
-#    rules = st.session_state["triggered_rules"]
-#    content_excerpt = st.session_state["content_excerpt"]
-
     st.markdown(
-        f"### {UI.STATUS_ICONS.get(decision_status, '')} "
-        f"Status (UI Preview): {UI.STATUS_LABELS.get(decision_status, decision_status)}"
+        f"### {UI.STATUS_ICONS.get(ui_risk_signal, '')} "
+        f"System Risk Signal: {UI.STATUS_LABELS.get(ui_risk_signal, ui_risk_signal)}"
     )
-#    st.markdown(f"### {UI.STATUS_ICONS.get(decision_status, '')} Status: {UI.STATUS_LABELS.get(decision_status, decision_status)}")
-    st.markdown(
-        f"**Tingkat Risiko (berdasarkan validasi otomatis):** "
-        f"{UI.RISK_LABELS.get(severity, severity)}"
-    )
-#    st.markdown(f"**Tingkat Risiko:** {UI.RISK_LABELS.get(risk_level, risk_level)}")
+#    st.markdown(
+#        f"**Tingkat Risiko Terdeteksi:** "
+#        f"{UI.RISK_LABELS.get(severity, severity)}"
+#    )
 
     if st.session_state["triggered_rules"]:
-        st.markdown("**Alasan utama:**")
-        for rule_id in st.session_state["triggered_rules"][:3]:
-            st.write(f"• {UI.RULE_LABELS.get(rule_id, rule_id)}")
-#    if rules:
-#        st.markdown("**Alasan utama:**")
-#        for rule_id in rules[:3]:
-#            st.write(f"• {UI.RULE_LABELS.get(rule_id, rule_id)}")
+        st.markdown("**Indikasi pola berisiko yang terdeteksi sistem:**")
+        for r in triggered_rules:
+            st.write(
+                f"- **{UI.RULE_LABELS.get(r.get('rule_id'), r.get('rule_id'))}**: "
+                f"{r.get('description','')}"
+                f"{r.get('message','')}"
+            )
+#            st.write(f"• {r['rule_id']} – {UI.RULE_LABELS.get(r['rule_id'], '')}")
 
-#    if decision_status in UI.ACTION_HINTS:
-#        st.info(f"**Tindakan disarankan:** {UI.ACTION_HINTS[decision_status]}")
-
-#    if content_excerpt:
-#        st.markdown("**Cuplikan Konten:**")
-#        st.text_area(
-#            label="Cuplikan Konten",
-#            value=content_excerpt,
-#            height=50,
-#            disabled=True,
-#            key="preview_excerpt"  # ✅ key unik
-#        )
     st.caption(f"ℹ️ {UI.REVIEW_SUMMARY_DISCLAIMER}")
 
     # =========================
@@ -263,25 +225,12 @@ else:
             "Tampilan ini adalah ringkasan UI untuk keperluan pilot. "
             "Bukan artefak keputusan sistem dan tidak dapat digunakan sebagai bukti formal."
         )      
-#        st.subheader("Final Decision Summary")
-        st.markdown(f"### {UI.STATUS_ICONS.get(decision_status, '')} Status: {UI.STATUS_LABELS.get(decision_status, decision_status)}")
+
+        st.markdown(f"### {UI.STATUS_ICONS.get(ui_risk_signal, '')} Status: {UI.STATUS_LABELS.get(ui_risk_signal, ui_risk_signal)}")
         st.markdown(f"**Tingkat Risiko:** {UI.RISK_LABELS.get(severity, severity)}")
-#        st.markdown(f"**Tingkat Risiko:** {UI.RISK_LABELS.get(risk_level, risk_level)}")
-#        if rules:
-#            st.markdown("**Alasan utama:**")
-#            for rule_id in rules[:3]:
-#                st.write(f"• {UI.RULE_LABELS.get(rule_id, rule_id)}")
         st.markdown(f"**Keputusan Reviewer:** {st.session_state['decision_input']}")
         st.markdown(f"**Alasan Reviewer:** {st.session_state['reason_input']}")
-#        if content_excerpt:
-#            st.markdown("**Cuplikan Konten:**")
-#            st.text_area(
-#                label="Cuplikan Konten",
-#                value=content_excerpt,
-#                height=50,
-#                disabled=True,
-#                key="final_excerpt"  # ✅ key unik berbeda
- #           )
+
         st.caption(
             "ℹ️ Ringkasan ini bersifat sementara dan hanya untuk membantu proses review manusia "
             "selama fase pilot. Artefak keputusan sistem akan tersedia pada fase produksi."

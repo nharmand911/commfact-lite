@@ -1,23 +1,17 @@
-LGL-ABS-01,Legal & Compliance,HIGH,30,100%,Klaim absolut tanpa pengecualian
-LGL-ABS-02,Legal & Compliance,HIGH,30,100 persen,Klaim absolut tanpa pengecualian
-LGL-ABS-03,Legal & Compliance,HIGH,30,seratus persen,Klaim absolut tanpa pengecualian
-LGL-ABS-04,Legal & Compliance,HIGH,30,tanpa risiko,Klaim absolut tanpa pengecualian
-LGL-ABS-05,Legal & Compliance,HIGH,30,tanpa resiko,Klaim absolut tanpa pengecualian
-LGL-ABS-06,Legal & Compliance,HIGH,30,tanpa cacat,Klaim absolut tanpa pengecualian
-LGL-ABS-07,Legal & Compliance,HIGH,30,selalu berhasil,Klaim absolut tanpa pengecualian
-LGL-ABS-08,Legal & Compliance,HIGH,30,sempurna,Klaim absolut tanpa pengecualian
-LGL-SUP-01,Brand & Message Consistency,HIGH,25,terbaik,Klaim superioritas tanpa pembanding
-LGL-SUP-02,Brand & Message Consistency,HIGH,25,nomor satu,Klaim superioritas tanpa pembanding
-LGL-SUP-03,Brand & Message Consistency,HIGH,25,no 1,Klaim superioritas tanpa pembanding
-LGL-SUP-04,Brand & Message Consistency,HIGH,25,paling unggul,Klaim superioritas tanpa pembanding
-LGL-SUP-05,Brand & Message Consistency,HIGH,25,lebih baik dari,Klaim superioritas tanpa pembanding
-LGL-SUP-06,Brand & Message Consistency,HIGH,25,paling direkomendasikan,Klaim superioritas tanpa pembanding
-LGL-SUP-07,Brand & Message Consistency,HIGH,25,terdepan,Klaim superioritas tanpa pembanding
-LGL-GUA-01,Legal & Compliance,HIGH,40,dijamin,Klaim jaminan hasil pasti
-LGL-GUA-02,Legal & Compliance,HIGH,40,jaminan,Klaim jaminan hasil pasti
-LGL-GUA-03,Legal & Compliance,HIGH,40,pasti sembuh,Klaim jaminan medis
-LGL-GUA-04,Legal & Compliance,HIGH,40,pasti berhasil,Klaim jaminan hasil pasti
-LGL-GUA-05,Legal & Compliance,HIGH,40,100% efektif,Klaim efektivitas absolut
-LGL-GUA-06,Legal & Compliance,HIGH,40,jamin kesembuhan,Klaim jaminan medis
-LGL-GUA-07,Legal & Compliance,HIGH,40,money back guarantee,Klaim jaminan komersial
-LGL-GUA-08,Legal & Compliance,HIGH,40,hasil terjamin,Klaim kepastian outcome
+rule_id,category,severity,score,pattern,message
+BRD-SUP-01,Brand & Message Consistency,MEDIUM,10,terbaik,Klaim superioritas implisit memerlukan pembanding atau konteks
+BRD-SUP-02,Brand & Message Consistency,MEDIUM,10,nomor satu,Klaim ranking memerlukan sumber atau pembuktian eksplisit
+BRD-SUP-03,Brand & Message Consistency,MEDIUM,8,no 1,Klaim ranking informal tanpa referensi
+BRD-SUP-04,Brand & Message Consistency,MEDIUM,8,paling unggul,Klaim keunggulan relatif tanpa definisi parameter
+BRD-SUP-05,Brand & Message Consistency,MEDIUM,8,terdepan,Klaim posisi pasar memerlukan konteks pembanding
+BRD-SUP-06,Brand & Message Consistency,MEDIUM,8,paling direkomendasikan,Klaim rekomendasi implisit tanpa sumber
+
+BRD-COMP-01,Brand & Message Consistency,MEDIUM,5,lebih efektif,Klaim komparatif memerlukan dasar pengukuran
+BRD-COMP-02,Brand & Message Consistency,MEDIUM,5,lebih efisien,Klaim komparatif implisit tanpa konteks pembanding
+BRD-COMP-03,Brand & Message Consistency,MEDIUM,5,lebih cepat,Klaim kecepatan relatif tanpa tolok ukur
+BRD-COMP-04,Brand & Message Consistency,MEDIUM,5,lebih aman,Klaim keamanan relatif tanpa penjelasan batasan
+
+BRD-FRAM-01,Brand & Message Consistency,LOW,3,solusi terpercaya,Framing persuasif implisit perlu klarifikasi
+BRD-FRAM-02,Brand & Message Consistency,LOW,3,pilihan cerdas,Framing nilai subjektif
+BRD-FRAM-03,Brand & Message Consistency,LOW,3,dirancang untuk,Framing fungsional non-komitmen
+BRD-FRAM-04,Brand & Message Consistency,LOW,3,membantu,Framing bantuan non-absolut

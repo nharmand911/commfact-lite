@@ -1,6 +1,7 @@
 import streamlit as st
 import uuid
 from datetime import datetime
+import hashlib
 
 _CONTENT_QUEUE_KEY = "CONTENT_QUEUE"
 
@@ -23,9 +24,23 @@ def add_content_to_queue(
     agency_code: str | None = None  # ✅ tambahkan agency_code
 ):
     """
-    Add new content to the in-memory queue.
+    Add new content to the in-memory queue with audit record.
+
+    Features:
+    - Generates unique content_id
+    - Timestamp created_at
+    - Creates record_hash (SHA256) for audit
+    - Saves agency_code if provided
     """
     _init_content_queue()
+
+    # Generate content_id & timestamp
+    content_id = str(uuid.uuid4())
+    created_at = datetime.utcnow().isoformat()
+
+    # 🔒 Generate record_hash (fingerprint unik)
+    hash_input = f"{content_id}|{created_at}|{content_text}".encode("utf-8")
+    record_hash = hashlib.sha256(hash_input).hexdigest()
 
     record = {
         "content_id": str(uuid.uuid4()),
@@ -35,7 +50,8 @@ def add_content_to_queue(
         "agency_code": agency_code,        # ✅ simpan agency_code
         "status": "SUBMITTED",
         "created_at": datetime.utcnow().isoformat(),
-        "decision": None
+        "decision": validation_result.get("decision"),  # ambil dari hasil validasi
+        "record_hash": record_hash
     }
 
     st.session_state[_CONTENT_QUEUE_KEY].append(record)
